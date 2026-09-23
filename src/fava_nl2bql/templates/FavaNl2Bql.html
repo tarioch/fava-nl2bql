@@ -1,0 +1,22 @@
+{% set question = request.args.get('question', '') %}
+
+<form method="get">
+  <label for="nl2bql-question">Ask a question about your ledger</label>
+  <input id="nl2bql-question" name="question" value="{{ question }}"
+         placeholder="e.g. how much did I spend on groceries last month?" size="60">
+  <button type="submit">Ask</button>
+</form>
+
+{% if question %}
+  {% set bql = extension.translate(question) %}
+  <h4>Generated BQL</h4>
+  <pre>{{ bql }}</pre>
+
+  <h4>Result</h4>
+  {% set result = extension.run_query(bql) %}
+  {% if result.t == 'table' %}
+    <svelte-component type="query-table"><script type="application/json">{{ result|tojson }}</script></svelte-component>
+  {% else %}
+    <pre>{{ result.contents }}</pre>
+  {% endif %}
+{% endif %}

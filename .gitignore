@@ -1,0 +1,37 @@
+# Temporary and binary files
+*~
+*.py[cod]
+*.so
+*.orig
+*.log
+__pycache__/
+.cache/
+.*.swp
+.DS_Store
+
+# Project files
+.idea
+.vscode
+
+# Package files
+*.egg
+*.eggs/
+.installed.cfg
+*.egg-info/
+
+# Unittest, coverage and type checking
+htmlcov/
+.coverage
+.tox
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build and docs folder/files
+build/
+dist/
+docs/api/
+docs/_build/
+
+# Per-project virtualenvs
+.venv*/
