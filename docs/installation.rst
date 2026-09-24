@@ -12,3 +12,6 @@ Then enable it in your beancount file:
 .. code-block:: text
 
    2026-01-01 custom "fava-extension" "fava_nl2bql.extension.FavaNl2Bql"
+
+See :doc:`usage` for the prerequisites (a local Ollama instance with the translation model pulled)
+and the ``ollama_host``/``model`` config keys.

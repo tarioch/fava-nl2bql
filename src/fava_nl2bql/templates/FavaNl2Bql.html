@@ -8,15 +8,19 @@
 </form>
 
 {% if question %}
-  {% set bql = extension.translate(question) %}
-  <h4>Generated BQL</h4>
-  <pre>{{ bql }}</pre>
+  {% set translation = extension.translate(question) %}
+  {% if translation.error %}
+    <p class="error">{{ translation.error }}</p>
+  {% elif translation.bql %}
+    <h4>Generated BQL</h4>
+    <pre>{{ translation.bql }}</pre>
 
-  <h4>Result</h4>
-  {% set result = extension.run_query(bql) %}
-  {% if result.t == 'table' %}
-    <svelte-component type="query-table"><script type="application/json">{{ result|tojson }}</script></svelte-component>
-  {% else %}
-    <pre>{{ result.contents }}</pre>
+    <h4>Result</h4>
+    {% set result = extension.run_query(translation.bql) %}
+    {% if result.t == 'table' %}
+      <svelte-component type="query-table"><script type="application/json">{{ result|tojson }}</script></svelte-component>
+    {% else %}
+      <pre>{{ result.contents }}</pre>
+    {% endif %}
   {% endif %}
 {% endif %}
