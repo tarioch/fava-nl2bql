@@ -18,7 +18,12 @@
     <h4>Result</h4>
     {% set result = extension.run_query(translation.bql) %}
     {% if result.t == 'table' %}
-      <a href="{{ url_for('download_query', result_format='csv', query_string=translation.bql) }}" data-remote>Download as CSV</a>
+      <p>
+        Download as
+        <a href="{{ url_for('download_query', result_format='csv', query_string=translation.bql) }}" data-remote>CSV</a>{% if config.HAVE_EXCEL %},
+        <a href="{{ url_for('download_query', result_format='xlsx', query_string=translation.bql) }}" data-remote>XLSX</a>, or
+        <a href="{{ url_for('download_query', result_format='ods', query_string=translation.bql) }}" data-remote>ODS</a>{% endif %}
+      </p>
       <svelte-component type="query-table"><script type="application/json">{{ result|tojson }}</script></svelte-component>
     {% else %}
       <pre>{{ result.contents }}</pre>

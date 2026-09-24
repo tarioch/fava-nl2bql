@@ -13,6 +13,9 @@ __pycache__/
 .idea
 .vscode
 
+# Local manual-testing ledger, not part of the package
+/example.beancount
+
 # Package files
 *.egg
 *.eggs/
