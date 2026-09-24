@@ -9,7 +9,7 @@ such as "how much did I spend on groceries last month", submit it, and the exten
 #. runs the query against the currently filtered ledger and renders the result table.
 
 If Ollama is unreachable, or the model produces something that isn't a valid BQL query, the extension
-shows an error message instead of a result — it never runs a query you haven't seen.
+shows an error message instead of a result.
 
 Prerequisites
 -------------
@@ -31,6 +31,6 @@ By default, the extension calls Ollama at ``http://localhost:11434`` using the m
 
 .. code-block:: text
 
-   2026-01-01 custom "fava-extension" "fava_nl2bql.extension.FavaNl2Bql" "{'ollama_host': 'http://localhost:11434', 'model': 'tarioch/qwen2.5-coder-bql:7b'}"
+   2026-01-01 custom "fava-extension" "fava_nl2bql.extension" "{'ollama_host': 'http://localhost:11434', 'model': 'tarioch/qwen2.5-coder-bql:7b'}"
 
 Both keys are optional; omit the ones you don't need to override.

@@ -9,7 +9,6 @@
   untracked files.
 - Never put real financial data, credentials or personal details into the repository, commits, pull requests or
   issues. Tests, fixtures and examples are synthetic.
-- The translated BQL query must always be shown to the user before it runs against their ledger.
 - Show that a test can fail: when fixing a bug, check that the new test fails without the fix.
 - When dependencies change, regenerate `uv.lock` with the uv version of the pre-commit hook and check that the lock
   diff only contains what you intended.
