@@ -36,6 +36,23 @@ def test_translate_strips_markdown_code_fence(mock_client_cls: MagicMock) -> Non
 
 
 @patch("fava_nl2bql.translator.Client")
+def test_translate_drops_trailing_fence_and_explanation(
+    mock_client_cls: MagicMock,
+) -> None:
+    # The model's actual (observed) behavior: no opening fence, just the query
+    # followed by a lone closing fence and a one-line explanation.
+    _mock_client(mock_client_cls).generate.return_value = GenerateResponse(
+        response="SELECT sum(position) WHERE account ~ 'Groceries'\n```\n\n"
+        "Sums the postings for Expenses:Groceries."
+    )
+
+    result = translate_to_bql("question")
+
+    assert result.bql == "SELECT sum(position) WHERE account ~ 'Groceries'"
+    assert result.error is None
+
+
+@patch("fava_nl2bql.translator.Client")
 def test_translate_connection_failure(mock_client_cls: MagicMock) -> None:
     _mock_client(mock_client_cls).generate.side_effect = ConnectionError(
         "Failed to connect to Ollama."

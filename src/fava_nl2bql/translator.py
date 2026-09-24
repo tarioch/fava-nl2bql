@@ -46,20 +46,31 @@ def translate_to_bql(
     except (ConnectionError, RequestError, ResponseError) as error:
         return Translation(bql=None, error=f"Could not translate with Ollama: {error}")
 
-    bql = _strip_markdown_fence(response.response or "").strip()
+    bql = _extract_query(response.response or "").strip()
     if not bql:
         return Translation(bql=None, error="Ollama returned an empty response.")
     return Translation(bql=bql, error=None)
 
 
-def _strip_markdown_fence(text: str) -> str:
-    """Strip a leading/trailing ```...``` fence (with or without a language tag), if present."""
+def _extract_query(text: str) -> str:
+    """Pull the query out of the model's raw response.
+
+    The model wraps the query in a ```` ``` ```` fence when asked for one, but more often
+    emits the query bare and follows it with a lone closing fence and a one-line
+    explanation (a training artifact, not something we asked for) - e.g.
+    ``"SELECT ...\\n```\\n\\nSums the postings for ..."``. Both shapes are handled by
+    stopping at the first bare fence line, and unwrapping one if the response opens
+    with one too.
+    """
     stripped = text.strip()
-    if not stripped.startswith("```"):
-        return stripped
     lines = stripped.splitlines()
-    if lines and lines[-1].strip() == "```":
-        lines = lines[1:-1]
-    else:
-        lines = lines[1:]
-    return "\n".join(lines).strip()
+
+    if stripped.startswith("```"):
+        end = next((i for i in range(1, len(lines)) if lines[i].strip() == "```"), None)
+        return "\n".join(lines[1:end]).strip()
+
+    fence = next((i for i, line in enumerate(lines) if line.strip() == "```"), None)
+    if fence is not None:
+        return "\n".join(lines[:fence]).strip()
+
+    return stripped
