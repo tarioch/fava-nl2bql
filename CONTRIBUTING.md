@@ -48,8 +48,6 @@ Things that catch people out:
 
 - Type hints are required in `src` (mypy `disallow_untyped_defs`, tests are exempt).
 - ruff selects `E4, E7, E9, F, B, I, S113, T20, UP` (see `pyproject.toml`), `ruff format` decides the formatting.
-- BQL execution is read-only (it is a query language, not a mutation language), but the translated query is always
-  shown to the user before it runs — never execute a translation the user hasn't seen.
 - Tests use synthetic ledgers and fixtures only: no real account numbers, balances or personal financial data,
   not even anonymized ones.
 
@@ -60,6 +58,13 @@ Things that catch people out:
   `uvx --from uv==<rev> uv lock`.
 - Dependabot (`.github/dependabot.yml`) opens grouped PRs for minor and patch updates of Python packages weekly and
   for GitHub Actions monthly. Major updates come as separate PRs.
+
+## Network
+
+- The only network call is `translator.py`'s call to a local Ollama server via the `ollama` package.
+  Always pass `timeout=` to `Client(...)` — a stalled server must not block the request forever.
+- Tests must not make real network calls: mock `fava_nl2bql.translator.Client` (see
+  `tests/fava_nl2bql/test_translator.py`).
 
 ## Git and pull requests
 
