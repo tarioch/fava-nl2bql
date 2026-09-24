@@ -48,7 +48,6 @@ Things that catch people out:
 
 - Type hints are required in `src` (mypy `disallow_untyped_defs`, tests are exempt).
 - ruff selects `E4, E7, E9, F, B, I, S113, T20, UP` (see `pyproject.toml`), `ruff format` decides the formatting.
-- BQL execution is read-only (it is a query language, not a mutation language).
 - Tests use synthetic ledgers and fixtures only: no real account numbers, balances or personal financial data,
   not even anonymized ones.
 
