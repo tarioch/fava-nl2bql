@@ -57,10 +57,9 @@ def _extract_query(text: str) -> str:
 
     The model wraps the query in a ```` ``` ```` fence when asked for one, but more often
     emits the query bare and follows it with a lone closing fence and a one-line
-    explanation (a training artifact, not something we asked for) - e.g.
-    ``"SELECT ...\\n```\\n\\nSums the postings for ..."``. Both shapes are handled by
-    stopping at the first bare fence line, and unwrapping one if the response opens
-    with one too.
+    explanation - e.g. ``"SELECT ...\\n```\\n\\nSums the postings for ..."``. Both shapes
+    are handled by stopping at the first bare fence line, and unwrapping one if the
+    response opens with one too.
     """
     stripped = text.strip()
     lines = stripped.splitlines()
