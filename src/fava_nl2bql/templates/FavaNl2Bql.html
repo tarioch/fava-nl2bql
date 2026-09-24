@@ -18,6 +18,7 @@
     <h4>Result</h4>
     {% set result = extension.run_query(translation.bql) %}
     {% if result.t == 'table' %}
+      <a href="{{ url_for('download_query', result_format='csv', query_string=translation.bql) }}">Download as CSV</a>
       <svelte-component type="query-table"><script type="application/json">{{ result|tojson }}</script></svelte-component>
     {% else %}
       <pre>{{ result.contents }}</pre>
