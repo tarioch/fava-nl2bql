@@ -38,6 +38,11 @@ docs = [
     "sphinx>=7",
     "sphinx_rtd_theme"
 ]
+# scripts/readme_captures.py, not needed for development or CI
+screenshots = [
+    "pillow",
+    "playwright",
+]
 
 [build-system]
 requires = ["hatchling >= 1.26", "uv-dynamic-versioning"]

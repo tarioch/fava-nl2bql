@@ -11,6 +11,12 @@ such as "how much did I spend on groceries last month", submit it, and the exten
 If Ollama is unreachable, or the model produces something that isn't a valid BQL query, the extension
 shows an error message instead of a result.
 
+.. image:: _static/ask-1.png
+   :alt: The Ask page with a question about monthly grocery spending, the generated BQL query and the result table
+
+.. image:: _static/ask-2.png
+   :alt: The Ask page with a question about the biggest expense categories, the generated BQL query and the result table
+
 Prerequisites
 -------------
 
