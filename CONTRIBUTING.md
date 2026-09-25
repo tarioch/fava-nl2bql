@@ -14,6 +14,7 @@ and runs them, published to PyPI. User documentation is in `docs/` (built with S
 | `src/fava_nl2bql/FavaNl2Bql.js` | the extension's JS module (Fava loads `<ClassName>.js` next to the class) |
 | `tests/fava_nl2bql/` | tests, mirroring the layout of `src` |
 | `docs/` | user documentation, `docs/api` is generated at build time and git-ignored |
+| `scripts/readme_captures.py` | regenerates the screenshots and the GIF in `docs/_static/` used by the README and docs |
 
 ## Setup
 
@@ -58,6 +59,21 @@ Things that catch people out:
   `uvx --from uv==<rev> uv lock`.
 - Dependabot (`.github/dependabot.yml`) opens grouped PRs for minor and patch updates of Python packages weekly and
   for GitHub Actions monthly. Major updates come as separate PRs.
+
+## Screenshots
+
+The README's GIF and the screenshots in the docs are generated, not taken by hand. After a UI change, regenerate
+them and commit the result:
+
+```bash
+uv sync --locked --dev --group screenshots
+uv run playwright install chromium
+uv run --group screenshots python scripts/readme_captures.py
+```
+
+The script runs Fava on `bean-example`'s synthetic ledger and replays answers recorded from the real model, so no
+Ollama server is needed. When the model changes, re-record those answers with `ollama run` (see `RECORDED` in the
+script).
 
 ## Network
 
