@@ -69,7 +69,7 @@ def test_translate_success() -> None:
     }
 
 
-def test_translate_uses_base_url_model_and_api_key() -> None:
+def test_translate_uses_given_settings() -> None:
     requests: list[httpx2.Request] = []
 
     def handler(request: httpx2.Request) -> httpx2.Response:
@@ -81,12 +81,15 @@ def test_translate_uses_base_url_model_and_api_key() -> None:
         base_url="http://model-server.example/v1/",
         model="custom-model",
         api_key="test-api-key",
+        temperature=0.7,
     )
 
     (request,) = requests
     assert str(request.url) == "http://model-server.example/v1/chat/completions"
     assert request.headers["Authorization"] == "Bearer test-api-key"
-    assert json.loads(request.content)["model"] == "custom-model"
+    body = json.loads(request.content)
+    assert body["model"] == "custom-model"
+    assert body["temperature"] == 0.7
 
 
 def test_translate_takes_api_key_from_environment(

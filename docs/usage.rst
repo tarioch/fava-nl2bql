@@ -49,6 +49,9 @@ All keys are optional; omit the ones you don't need to override.
 ``api_key``
    The API key for the server. Instead of writing it into the ledger, you can set the ``OPENAI_API_KEY``
    environment variable for the Fava process. Ollama needs no key.
+``temperature``
+   Sampling temperature, ``0`` by default so the same question gets the same answer. Higher values make the
+   answers vary between runs.
 
 Any server that speaks the OpenAI chat completions API works. The extension sends only the question, without
 any instructions about BQL. The translation model has been tuned for exactly that; a general-purpose model will

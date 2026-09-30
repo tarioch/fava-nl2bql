@@ -31,7 +31,7 @@ def test_translate_uses_config_overrides(mock_translate: MagicMock) -> None:
     mock_translate.return_value = TRANSLATION
     extension, _ = _make_extension(
         "{'base_url': 'http://model-server.example/v1', 'model': 'custom-model',"
-        " 'api_key': 'test-api-key'}"
+        " 'api_key': 'test-api-key', 'temperature': 0.7}"
     )
 
     assert extension.translate(QUESTION) == TRANSLATION
@@ -41,6 +41,7 @@ def test_translate_uses_config_overrides(mock_translate: MagicMock) -> None:
         base_url="http://model-server.example/v1",
         model="custom-model",
         api_key="test-api-key",
+        temperature=0.7,
     )
 
 
@@ -56,6 +57,7 @@ def test_translate_uses_defaults_without_config(mock_translate: MagicMock) -> No
         base_url="http://localhost:11434/v1",
         model="tarioch/qwen2.5-coder-bql",
         api_key=None,
+        temperature=0.0,
     )
 
 

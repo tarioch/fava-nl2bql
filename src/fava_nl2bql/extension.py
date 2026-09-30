@@ -10,6 +10,7 @@ from fava.helpers import FavaAPIError
 from fava_nl2bql.translator import (
     DEFAULT_BASE_URL,
     DEFAULT_MODEL,
+    DEFAULT_TEMPERATURE,
     Translation,
     translate_to_bql,
 )
@@ -30,6 +31,7 @@ class FavaNl2Bql(FavaExtensionBase):
             base_url=config.get("base_url", DEFAULT_BASE_URL),
             model=config.get("model", DEFAULT_MODEL),
             api_key=config.get("api_key"),
+            temperature=float(config.get("temperature", DEFAULT_TEMPERATURE)),
         )
 
     def run_query(self, bql: str) -> QueryResultTable | QueryResultText:

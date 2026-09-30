@@ -18,6 +18,9 @@ from openai import (
 
 DEFAULT_BASE_URL = "http://localhost:11434/v1"
 DEFAULT_MODEL = "tarioch/qwen2.5-coder-bql"
+# Deterministic answers, as the tuned model gives natively. Sent explicitly because
+# Ollama's /v1 ignores the temperature set in the model's Modelfile.
+DEFAULT_TEMPERATURE = 0.0
 _TIMEOUT = 30.0  # seconds; a stalled server must not block the request forever
 # Ollama ignores the key, but the client refuses to start without one.
 _NO_API_KEY = "unused"
@@ -37,6 +40,7 @@ def translate_to_bql(
     base_url: str = DEFAULT_BASE_URL,
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> Translation:
     """Translate a natural-language question into a BQL query.
 
@@ -47,6 +51,7 @@ def translate_to_bql(
         model: Name of the model to use, as the server knows it.
         api_key: API key for the server. Defaults to the ``OPENAI_API_KEY``
             environment variable, and to none at all if that is not set.
+        temperature: Sampling temperature for the model.
 
     Returns:
         The translation, or the reason it failed. Never executed without being
@@ -66,9 +71,7 @@ def translate_to_bql(
             completion = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": question}],
-                # Ollama's /v1 ignores the Modelfile's temperature, so ask for the
-                # same deterministic answers the tuned model gives natively.
-                temperature=0,
+                temperature=temperature,
             )
         content = completion.choices[0].message.content
     except APITimeoutError:
