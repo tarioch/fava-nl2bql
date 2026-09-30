@@ -47,7 +47,7 @@ All keys are optional; omit the ones you don't need to override.
 ``model``
    The model name, as the server knows it.
 ``api_key``
-   Sent as a bearer token. Instead of writing it into the ledger, you can set the ``FAVA_NL2BQL_API_KEY``
+   The API key for the server. Instead of writing it into the ledger, you can set the ``OPENAI_API_KEY``
    environment variable for the Fava process. Ollama needs no key.
 
 Any server that speaks the OpenAI chat completions API works. The extension sends only the question, without

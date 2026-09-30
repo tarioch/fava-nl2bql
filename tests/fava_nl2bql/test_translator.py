@@ -3,12 +3,13 @@ from collections.abc import Callable
 from typing import Any
 from unittest.mock import patch
 
-import httpx
+import httpx2
 import pytest
+from openai import OpenAI
 
 from fava_nl2bql.translator import Translation, translate_to_bql
 
-Handler = Callable[[httpx.Request], httpx.Response]
+Handler = Callable[[httpx2.Request], httpx2.Response]
 
 
 def _completion(content: str | None) -> dict[str, Any]:
@@ -18,11 +19,11 @@ def _completion(content: str | None) -> dict[str, Any]:
 
 
 def _answer(content: str | None) -> Handler:
-    return lambda request: httpx.Response(200, json=_completion(content))
+    return lambda request: httpx2.Response(200, json=_completion(content))
 
 
 def _raise(error: Exception) -> Handler:
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         raise error
 
     return handler
@@ -33,19 +34,20 @@ def _translate(
 ) -> Translation:
     """Run translate_to_bql against an in-process transport instead of the network."""
 
-    def client(**client_kwargs: Any) -> httpx.Client:
-        return httpx.Client(transport=httpx.MockTransport(handler), **client_kwargs)
+    def client(**client_kwargs: Any) -> OpenAI:
+        http_client = httpx2.Client(transport=httpx2.MockTransport(handler))
+        return OpenAI(http_client=http_client, **client_kwargs)
 
-    with patch("fava_nl2bql.translator.Client", side_effect=client):
+    with patch("fava_nl2bql.translator.OpenAI", side_effect=client):
         return translate_to_bql(question, **kwargs)
 
 
 def test_translate_success() -> None:
-    requests: list[httpx.Request] = []
+    requests: list[httpx2.Request] = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         requests.append(request)
-        return httpx.Response(200, json=_completion("SELECT account FROM entries"))
+        return httpx2.Response(200, json=_completion("SELECT account FROM entries"))
 
     result = _translate(handler, "how much did I spend on groceries?")
 
@@ -53,20 +55,18 @@ def test_translate_success() -> None:
     (request,) = requests
     assert request.method == "POST"
     assert str(request.url) == "http://localhost:11434/v1/chat/completions"
-    assert "Authorization" not in request.headers
     assert json.loads(request.content) == {
         "model": "tarioch/qwen2.5-coder-bql",
         "messages": [{"role": "user", "content": "how much did I spend on groceries?"}],
-        "stream": False,
     }
 
 
 def test_translate_uses_base_url_model_and_api_key() -> None:
-    requests: list[httpx.Request] = []
+    requests: list[httpx2.Request] = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         requests.append(request)
-        return httpx.Response(200, json=_completion("SELECT 1"))
+        return httpx2.Response(200, json=_completion("SELECT 1"))
 
     _translate(
         handler,
@@ -84,16 +84,24 @@ def test_translate_uses_base_url_model_and_api_key() -> None:
 def test_translate_takes_api_key_from_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("FAVA_NL2BQL_API_KEY", "sk-env")
-    requests: list[httpx.Request] = []
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env")
+    requests: list[httpx2.Request] = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         requests.append(request)
-        return httpx.Response(200, json=_completion("SELECT 1"))
+        return httpx2.Response(200, json=_completion("SELECT 1"))
 
     _translate(handler)
 
     assert requests[0].headers["Authorization"] == "Bearer sk-env"
+
+
+def test_translate_works_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    result = _translate(_answer("SELECT 1"))
+
+    assert result == Translation(bql="SELECT 1", error=None)
 
 
 def test_translate_strips_markdown_code_fence() -> None:
@@ -118,7 +126,7 @@ def test_translate_drops_trailing_fence_and_explanation() -> None:
 
 
 def test_translate_timeout() -> None:
-    result = _translate(_raise(httpx.ReadTimeout("timed out")))
+    result = _translate(_raise(httpx2.ReadTimeout("timed out")))
 
     assert result == Translation(
         bql=None, error="The model server did not respond within 30 seconds."
@@ -127,7 +135,7 @@ def test_translate_timeout() -> None:
 
 def test_translate_connection_failure() -> None:
     result = _translate(
-        _raise(httpx.ConnectError("[Errno 111] Connection refused")),
+        _raise(httpx2.ConnectError("[Errno 111] Connection refused")),
         base_url="http://localhost:11434/v1",
     )
 
@@ -140,7 +148,7 @@ def test_translate_connection_failure() -> None:
 
 def test_translate_connection_dropped() -> None:
     result = _translate(
-        _raise(httpx.RemoteProtocolError("Server disconnected without response."))
+        _raise(httpx2.RemoteProtocolError("Server disconnected without response."))
     )
 
     assert result.bql is None
@@ -150,25 +158,26 @@ def test_translate_connection_dropped() -> None:
 
 def test_translate_error_status() -> None:
     result = _translate(
-        lambda request: httpx.Response(404, json={"error": "model not found"})
+        lambda request: httpx2.Response(404, json={"error": "model not found"})
     )
 
     assert result == Translation(
         bql=None,
-        error='The model server answered with HTTP 404: {"error":"model not found"}',
+        error="The model server returned an error: "
+        "Error code: 404 - {'error': 'model not found'}",
     )
 
 
 @pytest.mark.parametrize(
     "response",
     [
-        httpx.Response(200, text="not json"),
-        httpx.Response(200, json={"choices": []}),
-        httpx.Response(200, json={"response": "SELECT 1"}),
-        httpx.Response(200, json=_completion(None) | {"choices": [None]}),
+        httpx2.Response(200, text="not json"),
+        httpx2.Response(200, json={"choices": []}),
+        httpx2.Response(200, json={"response": "SELECT 1"}),
+        httpx2.Response(200, json=_completion(None) | {"choices": [None]}),
     ],
 )
-def test_translate_unexpected_response(response: httpx.Response) -> None:
+def test_translate_unexpected_response(response: httpx2.Response) -> None:
     result = _translate(lambda request: response)
 
     assert result == Translation(
@@ -177,7 +186,7 @@ def test_translate_unexpected_response(response: httpx.Response) -> None:
 
 
 def test_translate_empty_question_short_circuits() -> None:
-    with patch("fava_nl2bql.translator.Client") as mock_client_cls:
+    with patch("fava_nl2bql.translator.OpenAI") as mock_client_cls:
         result = translate_to_bql("   ")
 
     assert result == Translation(bql=None, error=None)

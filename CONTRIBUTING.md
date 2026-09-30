@@ -77,10 +77,10 @@ script).
 
 ## Network
 
-- The only network call is `translator.py`'s `httpx` request to an OpenAI-compatible chat completions API (Ollama's
-  `/v1` by default). Always pass `timeout=` to `Client(...)` — a stalled server must not
-  block the request forever.
-- Tests must not make real network calls: patch `fava_nl2bql.translator.Client` to use an `httpx.MockTransport` (see
+- The only network call is `translator.py`'s call to an OpenAI-compatible chat completions API (Ollama's `/v1` by
+  default) via the `openai` package. Always pass `timeout=` to `OpenAI(...)` — a stalled server must not block the
+  request forever.
+- Tests must not make real network calls: patch `fava_nl2bql.translator.OpenAI` to use an `httpx2.MockTransport` (see
   `tests/fava_nl2bql/test_translator.py`).
 
 ## Git and pull requests
