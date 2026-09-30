@@ -6,6 +6,15 @@ from fava.helpers import FavaAPIError
 from fava_nl2bql.extension import FavaNl2Bql
 from fava_nl2bql.translator import Translation
 
+QUESTION = "How much did I spend on groceries per month this year?"
+TRANSLATION = Translation(
+    bql="SELECT year, month, sum(position) AS total\n"
+    "WHERE year = year(today()) AND account ~ 'Groceries'\n"
+    "GROUP BY year, month\n"
+    "ORDER BY year, month",
+    error=None,
+)
+
 
 def _make_extension(config: str | None = None) -> tuple[FavaNl2Bql, MagicMock]:
     ledger = MagicMock()
@@ -19,31 +28,31 @@ def test_extension_declares_a_report_with_a_js_module() -> None:
 
 @patch("fava_nl2bql.extension.translate_to_bql")
 def test_translate_uses_config_overrides(mock_translate: MagicMock) -> None:
-    mock_translate.return_value = Translation(bql="SELECT 1", error=None)
+    mock_translate.return_value = TRANSLATION
     extension, _ = _make_extension(
-        "{'base_url': 'http://example:4000/v1', 'model': 'custom-model',"
-        " 'api_key': 'sk-test'}"
+        "{'base_url': 'http://model-server.example/v1', 'model': 'custom-model',"
+        " 'api_key': 'test-api-key'}"
     )
 
-    extension.translate("question")
+    assert extension.translate(QUESTION) == TRANSLATION
 
     mock_translate.assert_called_once_with(
-        "question",
-        base_url="http://example:4000/v1",
+        QUESTION,
+        base_url="http://model-server.example/v1",
         model="custom-model",
-        api_key="sk-test",
+        api_key="test-api-key",
     )
 
 
 @patch("fava_nl2bql.extension.translate_to_bql")
 def test_translate_uses_defaults_without_config(mock_translate: MagicMock) -> None:
-    mock_translate.return_value = Translation(bql="SELECT 1", error=None)
+    mock_translate.return_value = TRANSLATION
     extension, _ = _make_extension(None)
 
-    extension.translate("question")
+    assert extension.translate(QUESTION) == TRANSLATION
 
     mock_translate.assert_called_once_with(
-        "question",
+        QUESTION,
         base_url="http://localhost:11434/v1",
         model="tarioch/qwen2.5-coder-bql",
         api_key=None,
