@@ -530,6 +530,7 @@ name = "fava-nl2bql"
 source = { editable = "." }
 dependencies = [
     { name = "fava" },
+    { name = "httpx" },
     { name = "ollama" },
 ]
 
@@ -553,6 +554,7 @@ screenshots = [
 [package.metadata]
 requires-dist = [
     { name = "fava", specifier = ">=1.30" },
+    { name = "httpx", specifier = ">=0.27" },
     { name = "ollama", specifier = ">=0.6" },
 ]
 

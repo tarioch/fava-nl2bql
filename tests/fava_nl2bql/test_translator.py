@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import httpx
 from ollama import GenerateResponse, ResponseError
 
 from fava_nl2bql.translator import Translation, translate_to_bql
@@ -63,6 +64,32 @@ def test_translate_connection_failure(mock_client_cls: MagicMock) -> None:
     assert result.bql is None
     assert (
         result.error == "Could not translate with Ollama: Failed to connect to Ollama."
+    )
+
+
+@patch("fava_nl2bql.translator.Client")
+def test_translate_timeout(mock_client_cls: MagicMock) -> None:
+    _mock_client(mock_client_cls).generate.side_effect = httpx.ReadTimeout("timed out")
+
+    result = translate_to_bql("question")
+
+    assert result == Translation(
+        bql=None, error="Ollama did not respond within 30 seconds."
+    )
+
+
+@patch("fava_nl2bql.translator.Client")
+def test_translate_connection_dropped(mock_client_cls: MagicMock) -> None:
+    _mock_client(mock_client_cls).generate.side_effect = httpx.RemoteProtocolError(
+        "Server disconnected without sending a response."
+    )
+
+    result = translate_to_bql("question")
+
+    assert result.bql is None
+    assert result.error == (
+        "Could not translate with Ollama: "
+        "Server disconnected without sending a response."
     )
 
 

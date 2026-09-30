@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import httpx
 from ollama import Client, RequestError, ResponseError
 
 DEFAULT_HOST = "http://localhost:11434"
@@ -43,7 +44,17 @@ def translate_to_bql(
     try:
         with Client(host=host, timeout=_TIMEOUT) as client:
             response = client.generate(model=model, prompt=question, stream=False)
-    except (ConnectionError, RequestError, ResponseError) as error:
+    except httpx.TimeoutException:
+        return Translation(
+            bql=None,
+            error=f"Ollama did not respond within {_TIMEOUT:g} seconds.",
+        )
+    except (
+        ConnectionError,
+        RequestError,
+        ResponseError,
+        httpx.TransportError,
+    ) as error:
         return Translation(bql=None, error=f"Could not translate with Ollama: {error}")
 
     bql = _extract_query(response.response or "").strip()
