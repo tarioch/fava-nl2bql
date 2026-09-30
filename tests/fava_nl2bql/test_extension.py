@@ -21,13 +21,17 @@ def test_extension_declares_a_report_with_a_js_module() -> None:
 def test_translate_uses_config_overrides(mock_translate: MagicMock) -> None:
     mock_translate.return_value = Translation(bql="SELECT 1", error=None)
     extension, _ = _make_extension(
-        "{'ollama_host': 'http://example:1234', 'model': 'custom-model'}"
+        "{'base_url': 'http://example:4000/v1', 'model': 'custom-model',"
+        " 'api_key': 'sk-test'}"
     )
 
     extension.translate("question")
 
     mock_translate.assert_called_once_with(
-        "question", host="http://example:1234", model="custom-model"
+        "question",
+        base_url="http://example:4000/v1",
+        model="custom-model",
+        api_key="sk-test",
     )
 
 
@@ -39,7 +43,10 @@ def test_translate_uses_defaults_without_config(mock_translate: MagicMock) -> No
     extension.translate("question")
 
     mock_translate.assert_called_once_with(
-        "question", host="http://localhost:11434", model="tarioch/qwen2.5-coder-bql"
+        "question",
+        base_url="http://localhost:11434/v1",
+        model="tarioch/qwen2.5-coder-bql",
+        api_key=None,
     )
 
 

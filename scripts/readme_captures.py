@@ -1,6 +1,6 @@
 """Regenerate the screenshots and the animated GIF shown in the README.
 
-Runs Fava in-process on a generated example ledger, with the extension's Ollama host
+Runs Fava in-process on a generated example ledger, with the extension's model API
 pointed at a small stand-in server that replays answers recorded from the real model,
 and captures the Ask page with Playwright. No Ollama server or model is needed.
 
@@ -60,14 +60,19 @@ Sums the postings for all Expenses accounts last year, per top-level category.""
 QUESTIONS = list(RECORDED)
 
 
-class _RecordedOllama(BaseHTTPRequestHandler):
-    """Answers Ollama's ``/api/generate`` with the recorded responses."""
+class _RecordedModel(BaseHTTPRequestHandler):
+    """Answers ``/v1/chat/completions`` with the recorded responses."""
 
     def do_POST(self) -> None:
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        prompt = request["prompt"].strip()
+        question = request["messages"][-1]["content"].strip()
+        message = {"role": "assistant", "content": RECORDED[question]}
         body = json.dumps(
-            {"model": request["model"], "response": RECORDED[prompt], "done": True}
+            {
+                "object": "chat.completion",
+                "model": request["model"],
+                "choices": [{"index": 0, "message": message, "finish_reason": "stop"}],
+            }
         ).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -79,7 +84,7 @@ class _RecordedOllama(BaseHTTPRequestHandler):
         pass
 
 
-def _write_ledger(path: Path, ollama_host: str) -> None:
+def _write_ledger(path: Path, base_url: str) -> None:
     """Write bean-example's synthetic ledger, ending today so ``today()`` queries match."""
     today = datetime.date.today()
     random.seed(42)
@@ -91,7 +96,7 @@ def _write_ledger(path: Path, ollama_host: str) -> None:
         True,
         file=buffer,
     )
-    config = repr({"ollama_host": ollama_host})
+    config = repr({"base_url": base_url})
     extension = f'{today.year - 2}-01-01 custom "fava-extension" "fava_nl2bql.extension" "{config}"'
     path.write_text(f"{buffer.getvalue()}\n{extension}\n", encoding="utf-8")
 
@@ -148,11 +153,11 @@ def _animation(page: Page, base: str) -> None:
 
 def main() -> None:
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
-    ollama = HTTPServer(("127.0.0.1", 0), _RecordedOllama)
-    ollama_host = _serve(ollama)
+    model = HTTPServer(("127.0.0.1", 0), _RecordedModel)
+    base_url = f"{_serve(model)}/v1"
     with tempfile.TemporaryDirectory() as tmp:
         ledger = Path(tmp) / "example.beancount"
-        _write_ledger(ledger, ollama_host)
+        _write_ledger(ledger, base_url)
         app = create_app([ledger], load=True)
         fava = make_server("127.0.0.1", 0, app, threaded=True)
         base = f"{_serve(fava)}/example-beancount-file"
@@ -169,7 +174,7 @@ def main() -> None:
             _animation(page, base)
             browser.close()
         fava.shutdown()
-    ollama.shutdown()
+    model.shutdown()
 
 
 if __name__ == "__main__":

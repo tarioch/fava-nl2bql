@@ -18,7 +18,7 @@ dynamic = ["version"]
 requires-python = ">=3.11"
 dependencies = [
     "fava>=1.30",
-    "ollama>=0.6",
+    "httpx>=0.27",
 ]
 
 [project.urls]
