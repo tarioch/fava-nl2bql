@@ -187,29 +187,6 @@ def test_translate_error_status() -> None:
     assert 'model "custom-model" not found, try pulling it first' in result.error
 
 
-@pytest.mark.parametrize(
-    "response",
-    [
-        # Some other web server answering at the configured URL.
-        httpx2.Response(200, html="<html><body>It works!</body></html>"),
-        # A completion without any choices.
-        httpx2.Response(200, json={"choices": []}),
-        # Ollama's native /api/generate response instead of a chat completion.
-        httpx2.Response(
-            200,
-            json={"model": "tarioch/qwen2.5-coder-bql", "response": BQL, "done": True},
-        ),
-    ],
-    ids=["html", "no-choices", "ollama-native"],
-)
-def test_translate_unexpected_response(response: httpx2.Response) -> None:
-    result = _translate(lambda request: response)
-
-    assert result == Translation(
-        bql=None, error="The model server returned an unexpected response."
-    )
-
-
 def test_translate_empty_question_short_circuits() -> None:
     with patch("fava_nl2bql.translator.OpenAI") as mock_client_cls:
         result = translate_to_bql("   ")

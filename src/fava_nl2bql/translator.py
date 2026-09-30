@@ -84,7 +84,7 @@ def translate_to_bql(
             bql=None,
             error=f"The model server returned an error: {error.message}",
         )
-    except (OpenAIError, AttributeError, IndexError, TypeError):
+    except OpenAIError:
         return Translation(
             bql=None, error="The model server returned an unexpected response."
         )
