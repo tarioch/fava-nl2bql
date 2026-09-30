@@ -1,14 +1,29 @@
-"""Natural language to BQL translation via a local Ollama model."""
+"""Natural language to BQL translation via an OpenAI-compatible chat completions API.
+
+Ollama serves this API under ``/v1``, as do many other model servers.
+"""
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
-from ollama import Client, RequestError, ResponseError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    OpenAI,
+    OpenAIError,
+)
 
-DEFAULT_HOST = "http://localhost:11434"
+DEFAULT_BASE_URL = "http://localhost:11434/v1"
 DEFAULT_MODEL = "tarioch/qwen2.5-coder-bql"
+# Deterministic answers, as the tuned model gives natively. Sent explicitly because
+# Ollama's /v1 ignores the temperature set in the model's Modelfile.
+DEFAULT_TEMPERATURE = 0.0
 _TIMEOUT = 30.0  # seconds; a stalled server must not block the request forever
+# Ollama ignores the key, but the client refuses to start without one.
+_NO_API_KEY = "unused"
 
 
 @dataclass(frozen=True)
@@ -22,15 +37,21 @@ class Translation:
 def translate_to_bql(
     question: str,
     *,
-    host: str = DEFAULT_HOST,
+    base_url: str = DEFAULT_BASE_URL,
     model: str = DEFAULT_MODEL,
+    api_key: str | None = None,
+    temperature: float = DEFAULT_TEMPERATURE,
 ) -> Translation:
-    """Translate a natural-language question into a BQL query via Ollama.
+    """Translate a natural-language question into a BQL query.
 
     Args:
         question: The user's question, as typed into the extension's report page.
-        host: Base URL of the Ollama server.
-        model: Name of the Ollama model to use.
+        base_url: Base URL of the OpenAI-compatible API, e.g. Ollama's
+            ``http://localhost:11434/v1``.
+        model: Name of the model to use, as the server knows it.
+        api_key: API key for the server. Defaults to the ``OPENAI_API_KEY``
+            environment variable, and to none at all if that is not set.
+        temperature: Sampling temperature for the model.
 
     Returns:
         The translation, or the reason it failed. Never executed without being
@@ -41,14 +62,42 @@ def translate_to_bql(
         return Translation(bql=None, error=None)
 
     try:
-        with Client(host=host, timeout=_TIMEOUT) as client:
-            response = client.generate(model=model, prompt=question, stream=False)
-    except (ConnectionError, RequestError, ResponseError) as error:
-        return Translation(bql=None, error=f"Could not translate with Ollama: {error}")
+        with OpenAI(
+            base_url=base_url,
+            api_key=api_key or os.environ.get("OPENAI_API_KEY") or _NO_API_KEY,
+            timeout=_TIMEOUT,
+            max_retries=0,
+        ) as client:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": question}],
+                temperature=temperature,
+            )
+        content = completion.choices[0].message.content
+    except APITimeoutError:
+        return Translation(
+            bql=None,
+            error=f"The model server did not respond within {_TIMEOUT:g} seconds.",
+        )
+    except APIConnectionError as error:
+        return Translation(
+            bql=None,
+            error=f"Could not reach the model server at {base_url}: "
+            f"{error.__cause__ or error}",
+        )
+    except APIStatusError as error:
+        return Translation(
+            bql=None,
+            error=f"The model server returned an error: {error.message}",
+        )
+    except OpenAIError:
+        return Translation(
+            bql=None, error="The model server returned an unexpected response."
+        )
 
-    bql = _extract_query(response.response or "").strip()
+    bql = _extract_query(content or "").strip()
     if not bql:
-        return Translation(bql=None, error="Ollama returned an empty response.")
+        return Translation(bql=None, error="The model returned an empty response.")
     return Translation(bql=bql, error=None)
 
 

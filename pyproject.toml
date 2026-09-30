@@ -18,7 +18,7 @@ dynamic = ["version"]
 requires-python = ">=3.11"
 dependencies = [
     "fava>=1.30",
-    "ollama>=0.6",
+    "openai>=3.22",
 ]
 
 [project.urls]
@@ -33,6 +33,7 @@ dev = [
     "pre-commit",
     "deptry",
     "mypy",
+    "httpx2",  # tests fake the model server with httpx2.MockTransport
 ]
 docs = [
     "sphinx>=7",

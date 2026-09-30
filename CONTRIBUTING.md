@@ -9,7 +9,7 @@ and runs them, published to PyPI. User documentation is in `docs/` (built with S
 | Path | Content |
 |---|---|
 | `src/fava_nl2bql/extension.py` | the `FavaExtensionBase` subclass Fava loads (report page, endpoints) |
-| `src/fava_nl2bql/translator.py` | natural language → BQL translation (the tuned model lives behind this) |
+| `src/fava_nl2bql/translator.py` | natural language → BQL translation via an OpenAI-compatible API (the tuned model lives behind this) |
 | `src/fava_nl2bql/templates/` | Jinja template for the extension's report page |
 | `src/fava_nl2bql/FavaNl2Bql.js` | the extension's JS module (Fava loads `<ClassName>.js` next to the class) |
 | `tests/fava_nl2bql/` | tests, mirroring the layout of `src` |
@@ -77,9 +77,10 @@ script).
 
 ## Network
 
-- The only network call is `translator.py`'s call to a local Ollama server via the `ollama` package.
-  Always pass `timeout=` to `Client(...)` — a stalled server must not block the request forever.
-- Tests must not make real network calls: mock `fava_nl2bql.translator.Client` (see
+- The only network call is `translator.py`'s call to an OpenAI-compatible chat completions API (Ollama's `/v1` by
+  default) via the `openai` package. Always pass `timeout=` to `OpenAI(...)` — a stalled server must not block the
+  request forever.
+- Tests must not make real network calls: patch `fava_nl2bql.translator.OpenAI` to use an `httpx2.MockTransport` (see
   `tests/fava_nl2bql/test_translator.py`).
 
 ## Git and pull requests
