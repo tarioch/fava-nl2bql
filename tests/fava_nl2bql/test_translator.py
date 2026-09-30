@@ -65,6 +65,7 @@ def test_translate_success() -> None:
     assert json.loads(request.content) == {
         "model": "tarioch/qwen2.5-coder-bql",
         "messages": [{"role": "user", "content": QUESTION}],
+        "temperature": 0,
     }
 
 

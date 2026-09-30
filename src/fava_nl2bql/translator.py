@@ -66,6 +66,9 @@ def translate_to_bql(
             completion = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": question}],
+                # Ollama's /v1 ignores the Modelfile's temperature, so ask for the
+                # same deterministic answers the tuned model gives natively.
+                temperature=0,
             )
         content = completion.choices[0].message.content
     except APITimeoutError:
