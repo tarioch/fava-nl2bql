@@ -33,6 +33,7 @@ dev = [
     "pre-commit",
     "deptry",
     "mypy",
+    "httpx2",  # tests fake the model server with httpx2.MockTransport
 ]
 docs = [
     "sphinx>=7",
