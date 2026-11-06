@@ -9,6 +9,9 @@ such as "how much did I spend on groceries last month", submit it, and the exten
 #. shows you the generated BQL query before running anything, and
 #. runs the query against the currently filtered ledger and renders the result table.
 
+To change the query, follow the "Edit in query editor" link below it. It opens Fava's own Query page with the
+generated query filled in and run, keeping the current filters, so you can edit it and run it again there.
+
 If the model server is unreachable, or the model produces something that isn't a valid BQL query, the extension
 shows an error message instead of a result.
 
