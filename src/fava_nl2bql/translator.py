@@ -21,7 +21,10 @@ DEFAULT_MODEL = "tarioch/qwen2.5-coder-bql"
 # Deterministic answers, as the tuned model gives natively. Sent explicitly because
 # Ollama's /v1 ignores the temperature set in the model's Modelfile.
 DEFAULT_TEMPERATURE = 0.0
-_TIMEOUT = 30.0  # seconds; a stalled server must not block the request forever
+# Seconds to wait for an answer. Generous because the first request after the server
+# has unloaded the model also waits for it to load again, but finite because a stalled
+# server must not block the request forever.
+DEFAULT_TIMEOUT = 120.0
 # Ollama ignores the key, but the client refuses to start without one.
 _NO_API_KEY = "unused"
 
@@ -41,6 +44,7 @@ def translate_to_bql(
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
     temperature: float = DEFAULT_TEMPERATURE,
+    timeout: float = DEFAULT_TIMEOUT,
 ) -> Translation:
     """Translate a natural-language question into a BQL query.
 
@@ -52,6 +56,8 @@ def translate_to_bql(
         api_key: API key for the server. Defaults to the ``OPENAI_API_KEY``
             environment variable, and to none at all if that is not set.
         temperature: Sampling temperature for the model.
+        timeout: Seconds to wait for the model server to answer, including the time
+            it takes to load the model.
 
     Returns:
         The translation, or the reason it failed. Never executed without being
@@ -65,7 +71,7 @@ def translate_to_bql(
         with OpenAI(
             base_url=base_url,
             api_key=api_key or os.environ.get("OPENAI_API_KEY") or _NO_API_KEY,
-            timeout=_TIMEOUT,
+            timeout=timeout,
             max_retries=0,
         ) as client:
             completion = client.chat.completions.create(
@@ -77,7 +83,7 @@ def translate_to_bql(
     except APITimeoutError:
         return Translation(
             bql=None,
-            error=f"The model server did not respond within {_TIMEOUT:g} seconds.",
+            error=f"The model server did not respond within {timeout:g} seconds.",
         )
     except APIConnectionError as error:
         return Translation(

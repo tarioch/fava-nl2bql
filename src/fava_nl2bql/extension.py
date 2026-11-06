@@ -11,6 +11,7 @@ from fava_nl2bql.translator import (
     DEFAULT_BASE_URL,
     DEFAULT_MODEL,
     DEFAULT_TEMPERATURE,
+    DEFAULT_TIMEOUT,
     Translation,
     translate_to_bql,
 )
@@ -32,6 +33,7 @@ class FavaNl2Bql(FavaExtensionBase):
             model=config.get("model", DEFAULT_MODEL),
             api_key=config.get("api_key"),
             temperature=float(config.get("temperature", DEFAULT_TEMPERATURE)),
+            timeout=float(config.get("timeout", DEFAULT_TIMEOUT)),
         )
 
     def run_query(self, bql: str) -> QueryResultTable | QueryResultText:
