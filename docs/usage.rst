@@ -55,6 +55,9 @@ All keys are optional; omit the ones you don't need to override.
 ``temperature``
    Sampling temperature, ``0`` by default so the same question gets the same answer. Higher values make the
    answers vary between runs.
+``timeout``
+   Seconds to wait for the model server's answer, ``120`` by default. This includes the time the server needs to
+   load the model, which can make the first question after a while noticeably slower than the next ones.
 
 Any server that speaks the OpenAI chat completions API works. The extension sends only the question, without
 any instructions about BQL. The translation model has been tuned for exactly that; a general-purpose model will

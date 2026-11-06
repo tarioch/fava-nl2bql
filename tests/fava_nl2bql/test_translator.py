@@ -143,7 +143,23 @@ def test_translate_timeout() -> None:
     result = _translate(_raise(httpx2.ReadTimeout("timed out")))
 
     assert result == Translation(
-        bql=None, error="The model server did not respond within 30 seconds."
+        bql=None, error="The model server did not respond within 120 seconds."
+    )
+
+
+def test_translate_passes_timeout_to_client() -> None:
+    with patch("fava_nl2bql.translator.OpenAI") as client:
+        translate_to_bql(QUESTION)
+        translate_to_bql(QUESTION, timeout=300)
+
+    assert [call.kwargs["timeout"] for call in client.call_args_list] == [120.0, 300]
+
+
+def test_translate_timeout_reports_configured_timeout() -> None:
+    result = _translate(_raise(httpx2.ReadTimeout("timed out")), timeout=300)
+
+    assert result == Translation(
+        bql=None, error="The model server did not respond within 300 seconds."
     )
 
 
