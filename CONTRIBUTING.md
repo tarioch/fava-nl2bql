@@ -22,7 +22,7 @@ and runs them, published to PyPI. User documentation is in `docs/` (built with S
 uv sync --locked --dev
 ```
 
-Python 3.11 to 3.14 are supported and tested.
+Python 3.12 to 3.14 are supported and tested.
 
 ## Checks
 

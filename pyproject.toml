@@ -15,7 +15,7 @@ classifiers = [
     "Framework :: Flask",
 ]
 dynamic = ["version"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fava>=1.30",
     "openai>=3.22",
